@@ -36,6 +36,7 @@ void initialize(map<int,process*>& mapper){
       break;
     
     process *newprocess=new process(procid,time);
+    memorysize=memorysize-newprocess->process_size;
     
     mapper[procid]=newprocess;
   }
@@ -50,6 +51,6 @@ int main() {
     {
       x.second->printdetails();
     }
-  
+  cout<<memorysize<<endl;
   
 }
