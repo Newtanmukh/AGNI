@@ -1,12 +1,7 @@
-#include <iostream>
-#include<vector>
-#include<set>
-#include <random>
-#include<map>
+#include <bits/stdc++.h>
+#include "header.h"
 
 using namespace std;
-
-int RAM_size=4000;
 
 struct process{
 int id;
@@ -16,10 +11,10 @@ bool child_exists;
 
 process(int x,int y)
 {
-  id=x;
-  quanta=y;
-  process_size=20 + ( rand() % ( 40 - 20 + 1 ) );
-  child_exists=false;
+  this->id=x;
+  this->quanta=y;
+  this->process_size=20 + ( rand() % ( 40 - 20 + 1 ) );
+  this->child_exists=false;
 }
 
 void printdetails(){
@@ -27,20 +22,34 @@ void printdetails(){
 }
 
 };
-map<int,process>mapper;
 
-void initialize(){
-
+void initialize(map<int,process*>& mapper){
+  ifstream inFile;
+  inFile.open("processinfo.txt");
+  int procid,time;
+  while (true)
+  {
+    
+    inFile >> procid>>time;
+    
+    if (inFile.eof())
+      break;
+    
+    process *newprocess=new process(procid,time);
+    
+    mapper[procid]=newprocess;
+  }
+  inFile.close();
   
 }
 
-
-
-
 int main() {
+  map<int,process*>mapper;
+  initialize(mapper);
+  for(auto &x : mapper)
+    {
+      x.second->printdetails();
+    }
   
- // process example(1,20);
-  //example.printdetails();
-
   
 }
