@@ -6,7 +6,10 @@ using namespace std;
 struct process{
 int id;
 int quanta;
+int stacksize;
+int heapsize;
 int process_size;
+int freesize;
 bool child_exists;
 
 process(int x,int y)
@@ -14,11 +17,19 @@ process(int x,int y)
   this->id=x;
   this->quanta=y;
   this->process_size=20 + ( rand() % ( 40 - 20 + 1 ) );
-  this->child_exists=false;
+  this->stacksize=0+( rand() % ( (this->process_size)/5 - 0 + 1 ) );
+  this->heapsize=0+( rand() % ( (this->process_size)/5 - 0 + 1 ) );
+  this->freesize=this->process_size-( this->stacksize+this->heapsize);
+  this->child_exists=false;//by default,we assume that the process doesnt have any child as such.
 }
 
 void printdetails(){
-  cout<<"The id of the process is :"<<id<<" quanta is :"<<quanta<<" and its size is : "<<process_size<<endl;
+  cout<<"The process id is : "<<this->id<<endl;
+  cout<<"The total size of the process is : "<<this->process_size<<endl;
+  cout<<"The total time elapse by this process is : "<<this->quanta<<endl;
+  cout<<"The size of the stack is : "<<this->stacksize<<endl;
+  cout<<"The size of the heap is : "<<this->heapsize<<endl;
+  cout<<"The total free memory inside is : "<<this->freesize<<endl;
 }
 
 };
