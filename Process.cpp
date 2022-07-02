@@ -18,15 +18,42 @@ memchunk(int x){
 }
 };
 
+
+//the global file table which actually points to each inode number.
+map<int,int>global_file_table;
+
+
+
 struct process{
+//the process id,identifier
 int id;
+//the amount of time for which it wants to run.
 int quanta;
+
+//stacksize
 int stacksize;
+
+//heapsize
 int heapsize;
+
+//total memory consumed by the process
 int process_size;
+
+//the total free size this process has. generally, it is equal to the total size of this process minus the stack and heap size
 int freesize;
+
+//will tell you if a child of this process exists,otherwise its a parent process
 bool child_exists;
+
+//this will keep track of the free memory in chunk size of one each.
 memchunk* nextchunk;
+
+
+//will contain the list of the files being used by this particular process. this will further point to the global open file table.
+map<int,int>local_file_table ;
+
+
+
 //add some space for the OS code as well
 //add page table here as well.PCB
 //per process open file table add here.
