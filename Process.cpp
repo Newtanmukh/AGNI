@@ -53,7 +53,11 @@ memchunk* nextchunk;
 map<int,int>local_file_table ;
 
 
-
+//add process state as well.
+//queue for each of the process state.(one for ready,one for block etc.)
+//copy of the process,option.
+//pointers to other related processes(Parent processes)
+//scheduling of processes on basis of red black tree.
 //add some space for the OS code as well
 //add page table here as well.PCB
 //per process open file table add here.
