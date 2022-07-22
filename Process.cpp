@@ -31,6 +31,8 @@ map<int,int>global_file_table;
 
 
 
+
+
 struct Node
 {
 int node;
@@ -67,6 +69,23 @@ if(left<=right)
 }
   return NULL;
 }
+
+Node* insert_process(Node* node,int id,int times)
+{
+  if(node==NULL)
+  {
+    node = new Node(id,times);
+  }
+  else if(times<=node->time)
+  {
+    node->left=insert_process(node->left,id,times);
+  }
+  else
+  {
+    node->right=insert_process(node->right,id,times);
+  }
+  return node;
+};
 
 void view_process_tree(Node* node)
 {
@@ -214,6 +233,67 @@ int main() {
   sort(nums.begin(),nums.end());
 
   Node* ProcessTree=process_tree(nums, 0, nums.size()-1);
-  view_process_tree(ProcessTree);
-  
+  //view_process_tree(ProcessTree);
+
+int number;
+  while(1)
+    {
+      cout<<"Press 1 if you want to add a new process"<<endl;
+      cout<<"Press 2 if you want to see all the processes along with the time quanta for which it is running"<<endl;
+      cout<<"Press 3 if you want to fork a process and create its child"<<endl;
+      cout<<"Press 4 if you want to see the memory image of a running process"<<endl;
+      cout<<"Press 5 if you want to see the list of open files by a process"<<endl;
+      
+      cin>>number;
+printf("\n\n");
+      if(number==1)
+      {
+        int ID;
+        int TIME;
+        cout<<"Please enter the id of the process which you want to create : "<<endl;
+        cin>>ID;
+        cout<<"Please enter the time quanta for which u want to run"<<endl;
+        cin>>TIME;
+        if(mapper.count(number))
+        {
+          cout<<"Sorry, this process already exists"<<endl;         
+        }
+        else
+        {
+          process *newproc=new process(ID,TIME);
+          mapper[ID]=newproc;
+          ProcessTree=insert_process(ProcessTree,ID,TIME);
+        }
+      }
+      else if(number==2)
+      {
+        view_process_tree(ProcessTree);
+      }
+      else if(number==3)
+      {
+        int ID;
+        cout<<"Please input the ID of the process of which you want to create fork"<<endl;
+        cin>>ID;
+        mapper[ID]->child_exists=true;
+        memorysize=memorysize-mapper[ID]->process_size; 
+        //since a child creates a separate memory image of its own.
+      }
+      else if(number==4)
+      {
+        int ids;
+        cout<<"Please enter the ID of the process for which  u want to see the memory image"<<endl;
+        cin>>ids;
+        mapper[ids]->printdetails();
+      }
+      else
+      {
+        int ids;
+        cout<<"Please enter the ID of the process for which  u want to see the memory image"<<endl;
+        cin>>ids;
+        for(auto x:mapper[ids]->local_file_table)
+          {
+            cout<<x.second<<endl;
+          }
+      }
+    }
 }
