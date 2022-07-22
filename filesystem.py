@@ -8,6 +8,10 @@ file_inode_mappings={}
 #the main thing in this folder, will show list of all the files whcih are inside each of the folder.
 folder_contents={}
 
+
+
+#############################################################
+# simulation of directory tree, general files and folders etc.
 list=['bin','usr','pbs','opt','apt','init.d','dpkg','amazon','shell','hosts','perl','fonts','group','passwd','networks','resolv.conf','gitconfig']
 
 folder_paths=[]
@@ -83,4 +87,42 @@ while(1):
     for x in folder_contents[folder_name]:
       print(x)
       print("\n")
-  
+
+#######################################################3
+#Simulation of system Calls like OPEN, READ, WRITE and LSEEK.
+ContentsOfFilesAndFolders={}
+characters=['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p']
+
+for x in AllFilesAndFolders:
+  content=""
+  for i in range(20):
+    content=content+random.choice(characters)
+  ContentsOfFilesAndFolders[x]=content
+# Read from a file
+name=str(input("Please enter the name of the file whose contents you want to see"))
+print("Contents of the file/folder is : \n")
+print(ContentsOfFilesAndFolders[name])
+# write/append to a file
+name=str(input("Please enter the name of the file whose contents you want to append"))
+addc=str(input("Tell us the contents : \n"))
+ContentsOfFilesAndFolders[name]=str(str(ContentsOfFilesAndFolders[name])+str(addc))
+
+#LSEEK, just go to a random index and from there print the contents till the end.
+name=str(input("Please enter the name of the file whose contents you want to go to a random location"))
+random_index=random.randrange(0,len(ContentsOfFilesAndFolders[name]))
+print(ContentsOfFilesAndFolders[name][random_index:len(ContentsOfFilesAndFolders[name])])
+
+################################################3
+# Linking of files and folders ( hard link and soft link )
+
+name=str(input("Please enter the name of the file which you want to link to \n"))
+size=random.randrange(10,15)
+filename=""
+
+for i in range(size):
+  filename=filename+random.choice(characters)
+
+ContentsOfFilesAndFolders[filename]=ContentsOfFilesAndFolders[name]
+
+##################################
+# FILE SYSTEM Implementation (data blocks, bitmap blocks, inode blocks etc.)
