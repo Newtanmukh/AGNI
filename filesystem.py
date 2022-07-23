@@ -1,6 +1,7 @@
 import sys
 import os
 import random
+import numpy as np
 
 no_of_files=random.randrange(50,100)
 file_inode_mappings={}
@@ -78,15 +79,15 @@ for x in file_inode_mappings.keys():
   print("File/Folder Name is : " + str(x) + "and their corresponding inode number is : "+ str(file_inode_mappings[x])+"\n")
   
 
-while(1):
-  folder_path=str(input("Please enter the folder path whose contents which you want to see : \n"))
-  folders=folder_path.split("/")
-  folder_name=folders[len(folders)-2]
-  print("Folder name is : "+folder_name)
-  if folder_name in folder_contents.keys():
-    for x in folder_contents[folder_name]:
-      print(x)
-      print("\n")
+
+folder_path=str(input("Please enter the folder path whose contents which you want to see : \n"))
+folders=folder_path.split("/")
+folder_name=folders[len(folders)-2]
+print("Folder name is : "+folder_name)
+if folder_name in folder_contents.keys():
+  for x in folder_contents[folder_name]:
+    print(x)
+    print("\n")
 
 #######################################################3
 #Simulation of system Calls like OPEN, READ, WRITE and LSEEK.
@@ -126,3 +127,58 @@ ContentsOfFilesAndFolders[filename]=ContentsOfFilesAndFolders[name]
 
 ##################################
 # FILE SYSTEM Implementation (data blocks, bitmap blocks, inode blocks etc.)
+
+#ignoring the inode mappings. considering that 63 total max files, each file will get atmax 8 data blocks. so total = 1(superblock) + 63 (inode) +(63)*8 = 568 total.
+#superblock will be at index 0.
+#file_blocks=np.zeroes((568))
+file_blocks={} # will store which data blocks belong to which inode block
+inode_blocks=[] # will store which inodes blocks currently are in use
+data_blocks=[] # will store which data blocks currently are in use
+super_block={}#super block, will keep track of all the free inodes as well as the data blocks.
+boolean=[True,False]
+weights=[7,4]#giving more weight to the considered thing.
+
+for i in range(1,64): # go from 1 to 64
+  is_considered=random.choices(boolean,weights,k=1)[0]
+  if is_considered:#means that, this particular inodes is being considered
+    inode_blocks.append(i)
+    data=[]
+    file_blocks[i]=data
+    for y in range(64+8*i,64+8*(i+1)):
+      take_this_data_block=random.choices(boolean,weights,k=1)[0]
+      if take_this_data_block:
+        data_blocks.append(y)
+        file_blocks[i].append(y)
+
+print("The inode blocks which are currently in use are : \n")
+print(inode_blocks)
+
+print("The data blocks which are currently in use are : \n")
+print(data_blocks)
+
+list1=[]
+list2=[]
+super_block["inode"]=list1
+super_block["data"]=list2
+
+for i in range(1,64):
+  if i not in inode_blocks:
+    super_block["inode"].append(i)
+
+for i in range(64,569):
+  if i not in data_blocks:
+    super_block["data"].append(i)
+
+print("The free inode blocks are : \n")
+print(super_block["inode"])
+
+print("The free data blocks are : \n")
+print(super_block["data"])
+
+print("The inode blocks along with their data blocks are \n")
+for x in file_blocks.keys():
+  print("Inode number is")
+  print(x)
+  print("The data blocks are ")
+  print(file_blocks[x])
+  
