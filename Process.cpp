@@ -3,12 +3,16 @@
 
 using namespace std;
 
+int pages=0;//keeps counter of the number of the physical pages in the real memory.
 
 queue<int>ready;
 queue<int>running;
 queue<int>blocked;
 
 vector<string>states={"Ready","Running","Blocked"};
+
+//Implement PAGING as well.
+
 
 struct memchunk{//structure for keeping track of the free chunks inside the memory.
 int size;
@@ -146,8 +150,11 @@ map<int,string>local_file_table ;
 //pointers to other related processes(Parent processes)
 //scheduling of processes on basis of red black tree.
 //add some space for the OS code as well
-//add page table here as well.PCB
+//add page table here as well.PCB.
 //per process open file table add here.
+
+//this page table will store the VA-PA mappings.
+map<int,int>page_table;
 
 process(int x,int y)
 {
@@ -176,6 +183,14 @@ while(number--) //Free memory mapping using linked list.
     nextchunk=nextchunk->ptr;   
   }
   nextchunk = original;
+
+  //Filling up the page table of this process. Assuming that it will start from 0 and that each bpage in the physical memory will of one unit is good.
+
+  for(int i=0;i<this->process_size;i++)
+    {
+      page_table[i]=pages;
+      pages=pages+1;
+    }
 
 }
 
@@ -313,7 +328,19 @@ printf("\n\n");
         cout<<"Please input the ID of the process of which you want to create fork"<<endl;
         cin>>ID;
         mapper[ID]->child_exists=true;
-        memorysize=memorysize-mapper[ID]->process_size; 
+        int allocate=mapper[ID]->process_size;
+        //NOTE
+        //Though fork creates another copy independently, but still here we for the sake for simplifying the calculation assume that the memory of this process itself gets doubled.
+        
+        for(int i=allocate;i<2*allocate;i++)
+          {
+          mapper[ID]->page_table[i]=pages;
+          pages=pages+1;
+          }
+        
+        mapper[ID]->process_size=2*mapper[ID]->process_size;
+        
+        memorysize=memorysize-2*mapper[ID]->process_size; 
         //since a child creates a separate memory image of its own.
       }
       else if(number==4)
