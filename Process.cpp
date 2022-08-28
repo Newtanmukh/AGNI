@@ -30,9 +30,6 @@ memchunk(int x){
 map<int,int>global_file_table;
 
 
-
-
-
 struct Node
 {
 int node;
@@ -56,6 +53,18 @@ Node(int x,int times)
 }
 
 };
+
+
+void showq(queue<int> gq)
+{
+    queue<int> g = gq;
+    while (!g.empty()) {
+        cout << '\t' << g.front();
+        g.pop();
+    }
+    cout << '\n';
+}
+
 
 Node* process_tree(vector<vector<int>>nums,int left,int right)
 {
@@ -235,6 +244,18 @@ int main() {
   Node* ProcessTree=process_tree(nums, 0, nums.size()-1);
   //view_process_tree(ProcessTree);
 
+
+  for(auto p:mapper)
+    {
+      if(p.second->process_state=="Ready")
+        ready.push(p.first);
+      else if(p.second->process_state=="Running")
+        running.push(p.first);
+      else
+        blocked.push(p.first);
+    }
+  
+
 int number;
   while(1)
     {
@@ -243,7 +264,8 @@ int number;
       cout<<"Press 3 if you want to fork a process and create its child"<<endl;
       cout<<"Press 4 if you want to see the memory image of a running process"<<endl;
       cout<<"Press 5 if you want to see the list of open files by a process"<<endl;
-      
+cout<<"Press 6 if you want to see the ID's of the running,ready and blocked processes respectively"<<endl;    
+      cout<<"Press 7 if you want to exit this program"<<endl;   
       cin>>number;
 printf("\n\n");
       if(number==1)
@@ -262,7 +284,7 @@ printf("\n\n");
         {
           process *newproc=new process(ID,TIME);
           mapper[ID]=newproc;
-          ProcessTree=insert_process(ProcessTree,ID,TIME);
+          insert_process(ProcessTree,ID,TIME);
         }
       }
       else if(number==2)
@@ -285,7 +307,7 @@ printf("\n\n");
         cin>>ids;
         mapper[ids]->printdetails();
       }
-      else
+      else if(number==5)
       {
         int ids;
         cout<<"Please enter the ID of the process for which  u want to see the memory image"<<endl;
@@ -294,6 +316,19 @@ printf("\n\n");
           {
             cout<<x.second<<endl;
           }
+      }
+      else if(number==6)
+      {
+        cout<<"The ID's of the Ready,RUnning and blocked processes are as follows : "<<endl;
+        
+      showq(ready);
+      showq(running);
+      showq(blocked);      
+        
+      }
+      else if(number==7)
+      {
+        return 0;
       }
     }
 }
