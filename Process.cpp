@@ -27,7 +27,7 @@ memchunk(int x){
 
 
 //the global file table which actually points to each inode number.
-map<int,int>global_file_table;
+map<string,int>global_file_table;
 
 
 struct Node
@@ -230,6 +230,8 @@ int main() {
   //cout<<memorysize<<endl;
     cout<<"\n"<<"\n";
   
+
+  
   vector<vector<int>>nums;
   
   for(auto &x:mapper)
@@ -240,10 +242,14 @@ int main() {
       nums.push_back(arr);
     }
   sort(nums.begin(),nums.end());
-
+  //create the process tree using BST.
   Node* ProcessTree=process_tree(nums, 0, nums.size()-1);
-  //view_process_tree(ProcessTree);
-
+  
+  //opening the global file table entries. the local file table entries point to the global file table, which in turn point to the in-memory inode of the actual file.
+global_file_table["STDIN"]=1;
+global_file_table["STDOUT"]=2;
+global_file_table["STDERR"]=3;  
+  
 
   for(auto p:mapper)
     {
@@ -265,7 +271,10 @@ int number;
       cout<<"Press 4 if you want to see the memory image of a running process"<<endl;
       cout<<"Press 5 if you want to see the list of open files by a process"<<endl;
 cout<<"Press 6 if you want to see the ID's of the running,ready and blocked processes respectively"<<endl;    
-      cout<<"Press 7 if you want to exit this program"<<endl;   
+      cout<<"Press 7 if you want to exit this program"<<endl;
+      cout<<"Press 8 if you want to see the inode number of all files that are open globally."<<endl;
+      cout<<"Press 9 if you want to open a new file in a process"<<endl;
+      
       cin>>number;
 printf("\n\n");
       if(number==1)
@@ -329,6 +338,57 @@ printf("\n\n");
       else if(number==7)
       {
         return 0;
+      }
+      else if(number==8)
+      {
+        cout<<"The inode number of the files that are open flobally are "<<endl;
+        for(auto x:global_file_table)
+          {
+            cout<<x.second<<endl;
+          }
+      }
+      else if(number==9)
+      {
+        int id;
+        cout<<"Please enter the ID of the process which wants to open a new file "<<endl;
+        cin>>id;
+
+        if(mapper.count(id)==0)
+        {
+          cout<<"Please enter an ID of process that exists. enter it again"<<endl;
+          int i;
+        cin>>i;
+          id=i;
+        }
+
+        string file_name;
+        cout<<"Please enter the filename which you want to open"<<endl;
+        cin>>file_name;
+        
+        mapper[id]->local_file_table[mapper[id]->local_file_table.size()]=file_name;
+
+        if(global_file_table.count(file_name)==0)
+        {
+          //basically it means that this file is not opened globally by any other process yet. this process is opening the file globally for the first time
+        global_file_table[file_name]=global_file_table.size()+1;
+        }
+        else
+        {
+          cout<<"This file has already been opened by another process globally in the global file table. the local file table has been updated"<<endl;
+        }
+
+        cout<<"The list of the files opened by the local file table is :"<<endl;
+        for(auto x : mapper[id]->local_file_table)
+          {
+            cout<<x.second<<endl;
+          }
+        cout<<"The list of the files that are opened globally and their respective inode number are :"<<endl;
+
+        for(auto x:global_file_table)
+          {
+            cout<<x.first<<" "<<x.second<<endl;
+          }
+        
       }
     }
 }
