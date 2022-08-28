@@ -108,6 +108,9 @@ void view_process_tree(Node* node)
   view_process_tree(node->right);
 }
 
+//defining the MLFQ.
+vector<vector<int>>mlfq;
+
 struct process{
 //the process id,identifier
 int id;
@@ -212,6 +215,8 @@ void initialize(map<int,process*>& mapper){
 int main() {
   map<int,process*>mapper;
   initialize(mapper);
+
+  //Putting the IDS of the processes into respective 
   for(auto &x : mapper)
     {
       x.second->printdetails();
@@ -274,6 +279,8 @@ cout<<"Press 6 if you want to see the ID's of the running,ready and blocked proc
       cout<<"Press 7 if you want to exit this program"<<endl;
       cout<<"Press 8 if you want to see the inode number of all files that are open globally."<<endl;
       cout<<"Press 9 if you want to open a new file in a process"<<endl;
+      cout<<"Press 10 if you want to exit a process"<<endl;
+      cout<<"Press 11 if you want to implement MLFQ as well as see thr ID's of the processes inside."<<endl;
       
       cin>>number;
 printf("\n\n");
@@ -388,6 +395,81 @@ printf("\n\n");
           {
             cout<<x.first<<" "<<x.second<<endl;
           }
+        
+      }
+      else if(number==10)
+      {
+        int ids;
+        cout<<"Please enter the ID of the process which you want to delete"<<endl;
+        cin>>ids;
+
+        while(mapper.count(ids)==0)
+        {
+          cout<<"Please enter a valid ID number of the process. Please enter it again."<<endl;
+          cout<<"Please enter the valid ID number again"<<endl;
+          int i;
+          cin>>i;
+          ids=i;
+        }
+
+        mapper.erase(ids);//basically remove the process again.
+
+        //clearing the array so that we will use it again.
+        nums.clear();
+  
+         for(auto &x:mapper)
+         {
+          vector<int>arr;
+            arr.push_back(x.second->quanta);
+          arr.push_back(x.first);
+           nums.push_back(arr);
+          }
+        
+  sort(nums.begin(),nums.end());
+  //create the process tree again from scracth using BST. I could have just added the deletion function separately but instead i doing it the lazy way, i.e, creating the process tree from scracth.
+   ProcessTree=process_tree(nums, 0, nums.size()-1);
+        
+      }
+      else if(number==11)
+      {
+        //Implement MLFQ.
+        vector<int>first_priority;
+        vector<int>second_priority;
+        vector<int>third_priority;
+        mlfq.push_back(first_priority);
+        mlfq.push_back(second_priority);
+        mlfq.push_back(third_priority);
+
+        for(auto p:mapper)
+        {
+          //within MLFQ,we can have different algorithms running at each level of the queue. at one level,maybe round robin,other maybe FIFO, etc. here, the running processes have highest priority, followed by others.
+      if(p.second->process_state=="Running")
+        mlfq[0].push_back(p.first);        
+      else if(p.second->process_state=="Ready")
+        mlfq[1].push_back(p.first);
+      else
+        mlfq[2].push_back(p.first);
+       }
+
+
+        // For seeing the processes at each level.
+
+        for(int i=0;i<3;i++)
+          {
+            if(i==0)
+              cout<<"The first priority queue in MLFQ is the running processes. they should finish first."<<endl;
+            else if(i==1)
+                cout<<"the second priority queue in MLFQ is the ready processes."<<endl;
+            else
+              cout<<"The last priority queue in the MLFQ is the IDs of the blocked processes"<<endl;
+            
+            for(auto x:mlfq[i])
+              cout<<x<<" ";
+            printf("\n");
+          }
+
+        mlfq.clear();//clearing the mlfq 2-D vector.
+
         
       }
     }
