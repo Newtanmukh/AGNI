@@ -1,5 +1,8 @@
 #include <bits/stdc++.h>
 #include "header.h"
+#include <chrono>
+#include <mutex>
+#include <thread>
 
 using namespace std;
 
@@ -8,6 +11,8 @@ int pages=0;//keeps counter of the number of the physical pages in the real memo
 queue<int>ready;
 queue<int>running;
 queue<int>blocked;
+
+
 
 vector<string>states={"Ready","Running","Blocked"};
 
@@ -58,7 +63,31 @@ Node(int x,int times)
 
 };
 
+//Thread structure. each thread has different programcounter,stackpointer as well as stacksize.
+struct threads{
+public:
+	int pc;
+	int SP;
+	int stacksize;
+	
+	threads(int x,int y,int z)
+	{
+	this->pc=x;
+	this->SP=y;
+	this->stacksize=z;
+	}
+	
+	void printdetails()
+	{
+	
+	cout<<"The program counter for this thread is : "<<this->pc<<endl;
+	cout<<"The stack pointer for this thread is : "<<this->SP<<endl;
+	cout<<"The stacksize for this thread is : "<<this->stacksize<<endl;
+	
+	}
+};
 
+//this function is used to see the list of blocked/running/ready processes.
 void showq(queue<int> gq)
 {
     queue<int> g = gq;
@@ -130,6 +159,12 @@ int stacksize;
 //heapsize
 int heapsize;
 
+//Program Counter
+int program_Counter;
+
+//Stack Pointer;
+int stack_pointer;
+
 //total memory consumed by the process
 int process_size;
 
@@ -156,6 +191,9 @@ map<int,string>local_file_table ;
 //this page table will store the VA-PA mappings.
 map<int,int>page_table;
 
+//to store the context and other info related to the thread.
+map<int,threads*>threading_info;
+
 process(int x,int y)
 {
   this->id=x;
@@ -166,11 +204,20 @@ process(int x,int y)
   this->freesize=this->process_size-( this->stacksize+this->heapsize);
   this->child_exists=false;//by default,we assume that the process doesnt have any child as such.
   this->process_state=states[rand()%3];
-
+  this->program_Counter=rand()%(this->process_size+1);
+  
   //opening the basic three files.
   local_file_table[0]="STDIN";
   local_file_table[1]="STDOUT";
   local_file_table[2]="STDERR";
+  
+  int num_threads=rand()%4+1;
+  
+  for(int i=0;i<num_threads;i++)
+  {
+  	threads *new_thread=new threads(i*(this->process_size)/num_threads,i*(this->stacksize)/num_threads,this->stacksize/num_threads);
+	threading_info[i]=new_thread;
+  }
 
   
 int number=this->freesize;
@@ -296,6 +343,9 @@ cout<<"Press 6 if you want to see the ID's of the running,ready and blocked proc
       cout<<"Press 9 if you want to open a new file in a process"<<endl;
       cout<<"Press 10 if you want to exit a process"<<endl;
       cout<<"Press 11 if you want to implement MLFQ as well as see thr ID's of the processes inside."<<endl;
+      cout<<"Press 12 if you want to see the recent VA-PA mappings"<<endl;
+      cout<<"Press 13 if you want to see the thread block related info in a process."<<endl;
+      
       
       cin>>number;
 printf("\n\n");
@@ -498,6 +548,51 @@ printf("\n\n");
         mlfq.clear();//clearing the mlfq 2-D vector.
 
         
+      }
+      else if(number==12)
+      {
+      
+      cout<<"Please enter the ID of the process for which you want to see the VA-PA mappings."<<endl;
+        int ids;
+        cin>>ids;
+
+        while(mapper.count(ids)==0)
+          {
+            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
+            int i;
+            cin>>i;
+            ids=i;
+          }
+
+         cout<<"The VA-PA mappings are as follows: "<<endl;
+        for(auto x:mapper[ids]->page_table)
+          {
+            cout<<"The Virtual Page number "<<x.first<<" is allocated at physical frame number "<<x.second<<endl;
+          }
+          printf("\n");
+          
+      }
+      else if(number==13)
+      {
+      cout<<"Please enter the ID of the process for which you want to see Thread related info inside it."<<endl;
+        int ids;
+        cin>>ids;
+
+        while(mapper.count(ids)==0)
+          {
+            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
+            int i;
+            cin>>i;
+            ids=i;
+          }
+          cout<<"The thread info associated with this process are as follows : "<<endl;
+          cout<<"The total number of threads associated with this process are "<<mapper[ids]->threading_info.size()<<endl;
+          
+          for(auto thrd:mapper[ids]->threading_info)
+          {
+          	thrd.second->printdetails();
+          }
+      
       }
     }
 }
