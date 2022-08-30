@@ -3,6 +3,10 @@
 #include <chrono>
 #include <mutex>
 #include <thread>
+#include <sys/wait.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include<stdio.h>
 
 using namespace std;
 
@@ -12,12 +16,9 @@ queue<int>ready;
 queue<int>running;
 queue<int>blocked;
 
-
+map<string,int>interrupt_descriptor_table;
 
 vector<string>states={"Ready","Running","Blocked"};
-
-//Implement PAGING as well.
-
 
 struct memchunk{//structure for keeping track of the free chunks inside the memory.
 int size;
@@ -70,6 +71,10 @@ public:
 	int SP;
 	int stacksize;
 	
+	//registers for this thread,apart from PC and SP.
+	int reg1;
+	int reg2;
+	
 	threads(int x,int y,int z)
 	{
 	this->pc=x;
@@ -98,7 +103,7 @@ void showq(queue<int> gq)
     cout << '\n';
 }
 
-
+//Create the balanced binary search tree.
 Node* process_tree(vector<vector<int>>nums,int left,int right)
 {
 if(left<=right)
@@ -183,8 +188,8 @@ map<int,string>local_file_table ;
 
 //copy of the process,option.
 //pointers to other related processes(Parent processes)
-//scheduling of processes on basis of red black tree.
-//add some space for the OS code as well
+//scheduling of processes on basis of BST.
+//add some space for the OS code as well.
 //add page table here as well.PCB.
 //per process open file table add here.
 
@@ -193,6 +198,11 @@ map<int,int>page_table;
 
 //to store the context and other info related to the thread.
 map<int,threads*>threading_info;
+
+//Every process thinks that OS code (logic for system calls etc. is like a part of its own. and it will itself execute it.)
+vector<string>os_code;
+
+int os_mem;
 
 process(int x,int y)
 {
@@ -204,12 +214,25 @@ process(int x,int y)
   this->freesize=this->process_size-( this->stacksize+this->heapsize);
   this->child_exists=false;//by default,we assume that the process doesnt have any child as such.
   this->process_state=states[rand()%3];
-  this->program_Counter=rand()%(this->process_size+1);
+  
+  //the Program Counter(PC) will be pointing to somewhere in between the memory where the code has been allocated. since we know the structure of the address space, it is easy to calculate the the memory that has been allocated for the code and static/global variables.
+  this->program_Counter=0+rand()%(this->process_size - this->freesize - this->stacksize - this->heapsize+1);
+  
+  //stack grows upwards. heap grows downwards. stack pointer (SP) will be pointing to somewhere in between the memory where the stacksize is allocated.
+  this->stack_pointer=this->freesize-this->stacksize+rand()%(this->stacksize+1);
+  
+  this->os_mem=this->freesize/3;
+  
+  this->os_code.push_back("Open() system call for opening a file.");
+  this->os_code.push_back("brk() system call for allocating more memory to the heap.");
+  this->os_code.push_back("Open() system call for opening a file.");
+  this->os_code.push_back("fsync() system call will push all writes to the disk.");
+  this->os_code.push_back("lseek() system call for going to a random location in a file.");
   
   //opening the basic three files.
-  local_file_table[0]="STDIN";
-  local_file_table[1]="STDOUT";
-  local_file_table[2]="STDERR";
+  this->local_file_table[0]="STDIN";
+  this->local_file_table[1]="STDOUT";
+  this->local_file_table[2]="STDERR";
   
   int num_threads=rand()%4+1;
   
@@ -277,6 +300,13 @@ void initialize(map<int,process*>& mapper){
 int main() {
   map<int,process*>mapper;
   initialize(mapper);
+  
+  interrupt_descriptor_table["Illegal Memory Address"]=200+(rand()%2000);
+  interrupt_descriptor_table["Network packet has arrived"]=200+(rand()%2000);
+  interrupt_descriptor_table["Open a file"]=200+(rand()%2000);
+  interrupt_descriptor_table["Write to a file"]=200+(rand()%2000);
+  interrupt_descriptor_table["Close a file"]=200+(rand()%2000);
+  interrupt_descriptor_table["Go to random location in an opened file."]=200+(rand()%2000);
 
   //Putting the IDS of the processes into respective 
   for(auto &x : mapper)
@@ -337,15 +367,19 @@ int number;
       cout<<"Press 3 if you want to fork a process and create its child"<<endl;
       cout<<"Press 4 if you want to see the memory image of a running process"<<endl;
       cout<<"Press 5 if you want to see the list of open files by a process"<<endl;
-cout<<"Press 6 if you want to see the ID's of the running,ready and blocked processes respectively"<<endl;    
-      cout<<"Press 7 if you want to exit this program"<<endl;
+      cout<<"Press 6 if you want to see the ID's of the running,ready and blocked processes respectively"<<endl;    
+      cout<<"Press 7 if you want to QUIT."<<endl;
       cout<<"Press 8 if you want to see the inode number of all files that are open globally."<<endl;
       cout<<"Press 9 if you want to open a new file in a process"<<endl;
       cout<<"Press 10 if you want to exit a process"<<endl;
       cout<<"Press 11 if you want to implement MLFQ as well as see thr ID's of the processes inside."<<endl;
       cout<<"Press 12 if you want to see the recent VA-PA mappings"<<endl;
       cout<<"Press 13 if you want to see the thread block related info in a process."<<endl;
-      
+      cout<<"Press 14 if you want to see the total available free memory."<<endl;
+      cout<<"Press 15 if you want to see the current program counter(PC) or stack Pointer(SP) of a process."<<endl;
+      cout<<"Press 16 if you want to call a function(Function call) in a process."<<endl;
+      cout<<"press 17 if you want to call a system call for a process "<<endl;
+      cout<<"press 18 if you want to see the location of all the kernel functions. "<<endl;
       
       cin>>number;
 printf("\n\n");
@@ -412,7 +446,7 @@ printf("\n\n");
       }
       else if(number==6)
       {
-        cout<<"The ID's of the Ready,RUnning and blocked processes are as follows : "<<endl;
+        cout<<"The ID's of the Ready,Running and blocked processes are as follows : "<<endl;
         
       showq(ready);
       showq(running);
@@ -547,7 +581,7 @@ printf("\n\n");
 
         mlfq.clear();//clearing the mlfq 2-D vector.
 
-        
+     
       }
       else if(number==12)
       {
@@ -571,10 +605,10 @@ printf("\n\n");
           }
           printf("\n");
           
-      }
+     }
       else if(number==13)
       {
-      cout<<"Please enter the ID of the process for which you want to see Thread related info inside it."<<endl;
+        cout<<"Please enter the ID of the process for which you want to see Thread related info inside it."<<endl;
         int ids;
         cin>>ids;
 
@@ -593,6 +627,87 @@ printf("\n\n");
           	thrd.second->printdetails();
           }
       
+      }
+      else if(number==14)
+      {
+      	cout<<"The total available free memory is : "<<endl;
+      	cout<<memorysize<<endl;
+      }
+      else if(number==15)
+      {
+      	cout<<"Please enter the ID of the process for which you want to see Thread related info inside it."<<endl;
+        int ids;
+        cin>>ids;
+
+        while(mapper.count(ids)==0)
+          {
+            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
+            int i;
+            cin>>i;
+            ids=i;
+          }
+          
+          cout<<"The program counter (PC) of this process is : "<<mapper[ids]->program_Counter<<endl;
+          cout<<"The stack Pointer(SP) of this process is : "<<mapper[ids]->stack_pointer<<endl;
+          
+      }
+      else if(number==16)
+      {
+      cout<<"Please enter the ID of the process for which you want to call a function call"<<endl;
+        int ids;
+        cin>>ids;
+
+        while(mapper.count(ids)==0)
+          {
+            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
+            int i;
+            cin>>i;
+            ids=i;
+          }
+         cout<<"Doing a function call now for the process id : "<<ids<<endl;
+         sleep(5);
+         
+         cout<<"Updating the program counter to the part where it is defined on the program."<<endl;
+         int old_pc=mapper[ids]->program_Counter;
+         mapper[ids]->program_Counter=500+rand()%1000;
+         cout<<"Updating the stack pointer now. "<<endl;
+         cout<<"Pushing a new stack frame to the stack and updating the Stack Pointer(SP). this new frame will store the old Program counter, the arguments to the function as well as the return value."<<endl;
+         sleep(5);
+         
+         int old_sp=mapper[ids]->stack_pointer;
+         mapper[ids]->stack_pointer=mapper[ids]->stack_pointer-5;//since stack grows  upwards so thats why the stack pointer is getting lesser. whereas the program counter will get bigger as it goes down.
+         vector<int>arguments;
+         int num_arg=1+rand()%5;
+         
+         while(num_arg--)
+         {
+         	arguments.push_back(5+rand()%30);
+         }
+         
+         sleep(5);
+         
+         cout<<"The arguments to this function,the new stack pointer(SP) and the new program counter(PC) respectively are :"<<endl;
+         cout<<"Total number of arguments is : "<<arguments.size()<<" and they are given below : "<<endl;
+         for(auto arg:arguments)
+         cout<<arg<<" ";
+         cout<<"New stack frame is located at  : "<<mapper[ids]->stack_pointer<<endl;
+         cout<<"The function is being called at the program counter : "<<mapper[ids]->program_Counter<<endl;
+         
+         sleep(5);
+         cout<<"The function call has been completed. now popping the stack frame and reverting the values of program counter,stack pointer and registers back."<<endl;
+         mapper[ids]->program_Counter=old_pc;
+         mapper[ids]->stack_pointer=old_sp;
+         arguments.clear();
+  
+      }
+      else if(number==17)
+      {
+      	//code for system call simulation.
+      	//generate trap function, etc.
+      }
+      else if(number==18)
+      {
+      	//see all the location of the kernel functions in the OS.
       }
     }
 }
