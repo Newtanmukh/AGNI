@@ -401,9 +401,8 @@ int number;
       cout<<"press 17 if you want to call a system call for a process "<<endl;
       cout<<"press 18 if you want to see the location of all the kernel functions. "<<endl;
       cout<<"Press 19 if you want to do context switch for a process."<<endl;
-      cout<<"Press 20 if you want to allocate runtime memory using the algorithms like Best fit,Worst fit and first fit"<<endl;
       cout<<"Press 21 if you wish to allocate memory for OS using buddy allocation scheme"<<endl;
-      cout<<"Press 22 if you wish to see the recent cache mappings in the TLB(Translational lookaside Buffer)"<<endl;
+      cout<<"Press 22 if you wish to see the recent cache mappings in the TLB(Translational lookaside Buffer) and simulate caching"<<endl;
       
       cin>>number;
 printf("\n\n");
@@ -788,11 +787,31 @@ printf("\n\n");
       }
       else if(number==19)
       {
-      
-      }
-      else if(number==20)
-      {
-      
+      	cout<<"Please enter the ID of the process where you are currently in"<<endl;
+        int ids;
+        cin>>ids;
+
+        while(mapper.count(ids)==0)
+          {
+            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
+            int i;
+            cin>>i;
+            ids=i;
+          }
+        cout<<"Please enter the ID of the process which you want to context switch to."<<endl;
+        int next;
+        cin>>next;  
+        
+         while(mapper.count(next)==0)
+          {
+            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
+            int i;
+            cin>>i;
+            next=i;
+          }
+          
+       
+          
       }
       else if(number==21)
       {
