@@ -12,6 +12,26 @@ using namespace std;
 
 int pages=0;//keeps counter of the number of the physical pages in the real memory.
 
+int privilege_bit=0; //It means that by default, the CPU is currently now at the User mode(less privileged mode). in case of making a system call, it will go to a higher system call and this bit will be set to 1.
+
+//defining the kernel stack for system call simulation.
+class kernel_stack
+{
+	//this will store the old PC, registers and other contexts
+	public:
+	int PC;
+	int reg1;
+	int reg2;
+	int stack_ptr;
+	kernel_stack(int x,int sp,int y,int z)
+	{
+		this->stack_ptr=sp;
+		this->PC=x;
+		this->reg1=y;
+		this->reg2=z;
+	}
+};
+
 queue<int>ready;
 queue<int>running;
 queue<int>blocked;
@@ -357,7 +377,7 @@ global_file_table["STDERR"]=3;
       else
         blocked.push(p.first);
     }
-  
+
 
 int number;
   while(1)
@@ -380,6 +400,10 @@ int number;
       cout<<"Press 16 if you want to call a function(Function call) in a process."<<endl;
       cout<<"press 17 if you want to call a system call for a process "<<endl;
       cout<<"press 18 if you want to see the location of all the kernel functions. "<<endl;
+      cout<<"Press 19 if you want to do context switch for a process."<<endl;
+      cout<<"Press 20 if you want to allocate runtime memory using the algorithms like Best fit,Worst fit and first fit"<<endl;
+      cout<<"Press 21 if you wish to allocate memory for OS using buddy allocation scheme"<<endl;
+      cout<<"Press 22 if you wish to see the recent cache mappings in the TLB(Translational lookaside Buffer)"<<endl;
       
       cin>>number;
 printf("\n\n");
@@ -704,10 +728,77 @@ printf("\n\n");
       {
       	//code for system call simulation.
       	//generate trap function, etc.
+      	cout<<"Please enter the ID of the process for which you want to call a System Call"<<endl;
+        int ids;
+        cin>>ids;
+
+        while(mapper.count(ids)==0)
+          {
+            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
+            int i;
+            cin>>i;
+            ids=i;
+          }
+        cout<<"System Call has been Invoked. Generating the Trap Instruction Now."<<endl;
+      	cout<<"Setting the privilege bit to 1 and switching from User to Kernel Mode. Taking the CPU to higher privilege level."<<endl;
+      	sleep(2);
+      	privilege_bit=1;//privilege bit set.
+      	
+      	cout<<"Updating the stack Pointer to the Kernel stack now."<<endl;
+      	int old_sp=mapper[ids]->stack_pointer;
+      	sleep(2);
+      	cout<<"Saving the Old register,the context  as well as the registers on the kernel stack now."<<endl;
+      	int old_pc=mapper[ids]->program_Counter;
+      	kernel_stack k_s(old_pc,rand()%5000,rand()%3000,rand()%4000);//saving the old PC,and registers(registers randomly generated) in the kernel stack.
+      	mapper[ids]->stack_pointer=k_s.stack_ptr;//stack pointer now pointing to the kernel stack.
+      	sleep(3);
+      	cout<<"Now looking up the IDT table to look at which address to jump to. The Program Counter will then be updated to that address."<<endl;
+
+      	vector<string>vec={"Illegal Memory Address","Network packet has arrived","Open a file","Write to a file","Close a file","Go to random location in an opened file."};
+      	string res=vec[rand()%(vec.size())];
+	mapper[ids]->program_Counter=interrupt_descriptor_table[res]; 
+	sleep(3);
+	
+	cout<<"The system call which is being executed is : "<<endl;
+	cout<<res<<endl;
+	cout<<"And it is located at the memory Address : "<<endl;
+	cout<<mapper[ids]->program_Counter<<endl;
+	sleep(2);
+	
+	cout<<"Now calling the Return from trap instruction"<<endl;
+	cout<<"Restoring the context,CPU Registers and the Program Counter and stack pointer back"<<endl;
+	mapper[ids]->program_Counter=old_pc;
+      	mapper[ids]->stack_pointer=old_sp;
+      	sleep(1);
+      	cout<<"System call successfully executed. Changing back the privilege bit to 0 and now coming to User Mode from Kernel mode."<<endl;
+      	sleep(1);
+
+      	privilege_bit=0;//privilege bit is 0. that means that we are in User Mode again(lesser privilege mode.)
+      	
       }
       else if(number==18)
       {
-      	//see all the location of the kernel functions in the OS.
+      	cout<<"Showing the contents of the Interruptor Descriptor Table(IDT) and the address where they are stored, now :"<<endl;
+      	sleep(2);
+      	for(auto instruction:interrupt_descriptor_table)
+      	{
+      		cout<<"The address where the instruction for ' "<<instruction.first<<" ' is stored at"<<instruction.second<<endl;
+      	}    	
+      	sleep(10);
+      }
+      else if(number==19)
+      {
+      
+      }
+      else if(number==20)
+      {
+      
+      }
+      else if(number==21)
+      {
+      }
+      else if(number==22){
+      
       }
     }
 }
