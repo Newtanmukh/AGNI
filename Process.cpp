@@ -169,6 +169,13 @@ void view_process_tree(Node* node)
 //defining the MLFQ.
 vector<vector<int>>mlfq;
 
+
+void simulate_caching()
+{
+	//Simulate it for some time.
+	return;
+}
+
 struct process{
 //the process id,identifier
 int id;
@@ -842,7 +849,7 @@ printf("\n\n");
       }
       else if(number==22){
       
-      	//simulate_caching();
+      	simulate_caching();
       
       }
     }
