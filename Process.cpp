@@ -24,9 +24,9 @@ class kernel_stack
 	int reg2;
 	int stack_ptr;
 	kernel_stack(int x,int sp,int y,int z)
-	{
-		this->stack_ptr=sp;
+	{		
 		this->PC=x;
+		this->stack_ptr=sp;
 		this->reg1=y;
 		this->reg2=z;
 	}
@@ -402,7 +402,7 @@ int number;
       cout<<"press 18 if you want to see the location of all the kernel functions. "<<endl;
       cout<<"Press 19 if you want to do context switch for a process."<<endl;
       cout<<"Press 21 if you wish to allocate memory for OS using buddy allocation scheme"<<endl;
-      cout<<"Press 22 if you wish to see the recent cache mappings in the TLB(Translational lookaside Buffer) and simulate caching"<<endl;
+      cout<<"Press 22 if you wish to see simulate Caching with Translational Lookaside Buffer."<<endl;
       
       cin>>number;
 printf("\n\n");
@@ -787,6 +787,7 @@ printf("\n\n");
       }
       else if(number==19)
       {
+      //Making a scheduler.
       	cout<<"Please enter the ID of the process where you are currently in"<<endl;
         int ids;
         cin>>ids;
@@ -798,26 +799,50 @@ printf("\n\n");
             cin>>i;
             ids=i;
           }
-        cout<<"Please enter the ID of the process which you want to context switch to."<<endl;
-        int next;
-        cin>>next;  
         
-         while(mapper.count(next)==0)
-          {
-            cout<<"This process id does not exist. Please enter the correct process ID once again"<<endl;
-            int i;
-            cin>>i;
-            next=i;
-          }
+       //OS Scheduler will now pick up the process which had the least running time till now. it will have the most privilege and will get context switched to.
          
+        Node* nodes=ProcessTree;
         
-       
+        while(nodes->left!=NULL)
+        {
+        	nodes=nodes->left;
+        }
+        
+        int proc_id=nodes->node;
+        int quanta=nodes->time;
+        
+        cout<<"OS Scheduler will now pickup the process which has run for the least time till now.\n"<<endl;
+        cout<<"The process which was running previously had the Process ID of "<<ids<<" and had ran for a time period of : "<<mapper[ids]->quanta<<endl;
+        sleep(3);
+        cout<<"Going to higher-privileged kernel mode from User mode. setting the privilege bit to 1 now.\n"<<endl;
+        privilege_bit=1;
+        sleep(3);
+	 cout<<"saving the context,Program Counters(PC's) and registers on the kernel stack now."<<endl;
+	 int first_register=rand()%10000;          //assuming that it had access to two registers and generated them randomly.
+	 int second_register=rand()%11000;
+	 cout<<"The process which we are going to context switch to has process ID : "<<proc_id<<" and had ran for time period of : "<<quanta<<endl; 
+	 sleep(3);
+	 kernel_stack k_s(mapper[ids]->program_Counter,mapper[ids]->stack_pointer,first_register,second_register);        
+         cout<<"Now Switching the stack pointer of the old process to the Kernel stack of B. From there the Return from trap will be invoked.\n"<<endl;
+         cout<<"We will now restore the context and registers from this kernel stack"<<endl;
+         mapper[ids]->stack_pointer=mapper[proc_id]->stack_pointer;
+         mapper[ids]->program_Counter=mapper[proc_id]->program_Counter;
+         //It is assumed that the new process to which we are going to context switch to, had also been saved sometime back in the memory while it had been context switched out.
+         sleep(3);
+         cout<<"Context switch done. We will now change the CPU Privilege level from kernel to user mode again. again setting the privilege_bit to 0."<<endl;
+         privilege_bit=0;
+         cout<<"Now Jumping back to the User Code once again. The new process will now resume from here.\n"<<endl;
+         sleep(3);
+
           
       }
       else if(number==21)
       {
       }
       else if(number==22){
+      
+      	//simulate_caching();
       
       }
     }
